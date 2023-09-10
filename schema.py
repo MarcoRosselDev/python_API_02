@@ -11,4 +11,4 @@ class Post(BaseModel):
     title: str      #----> Valor requerido
     content: str    #----> Valor requerido. Si no esta, lanza error.
     published: bool = True  #----> Valor por defecto.
-    reting_optional: Optional[int] = None  #---> Valor opcional """
+    reting_optional: Optional[int] = None  #---> Valor opcional #----> need | from typing import Optional"""
