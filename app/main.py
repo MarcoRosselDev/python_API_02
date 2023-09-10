@@ -1,6 +1,8 @@
 from fastapi import FastAPI, status, HTTPException
-from schema import Post
+from .schema import Post
 
+# uvicorn main:app --reload ----------> arrancar un servidor local
+# uvicorn app.main:app --reload ------> dentro de una carpeta 
 app = FastAPI()
 
 @app.post("/posts", 
