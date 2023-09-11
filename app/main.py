@@ -22,7 +22,7 @@ while True:
         #conn = psycopg2.connect(host, database, user, password)
         conn = psycopg2.connect(host='localhost', database=DATABASE_NAME, user='postgres', password=PASS_DB, cursor_factory=RealDictCursor)
         # Open a cursor to perform database operations
-        cur = conn.cursor()
+        cur = conn.cursor() # este cur es importante, con esto operamos CRUD en postgres desde python
         print('successful conection')
         break
     except Exception as error:
@@ -32,25 +32,24 @@ while True:
 
 @app.get("/posts")
 def get_posts():
-    return{}
+    cur.execute("""SELECT * FROM posts""")
+    posts = cur.fetchall()
+    return{'data':posts}
 
-@app.post("/posts", 
+@app.post("/posts",
         status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
         )
 def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
-    new_post:Post
+    post:Post
     ):
+    cur.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
+    posts_db = cur.fetchone()
+    conn.commit()
     return {
-        # we can format this return
-        #'another_think': 'were return',
-        #'title':body['title'],
-        #'content':body['content'] 
-        'another_think': 'were return',
-        'title':new_post.title,
-        'content':new_post.content
+        'data': posts_db
         }
 
 @app.get("/posts/{id}")
