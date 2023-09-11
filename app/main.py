@@ -55,11 +55,20 @@ def posting(
 @app.get("/posts/{id}")
 def get_one(id:int):
     # algun mecanismo para encontrar el id en la base de datos
-    # si no esta prosesamos el status =
-    found_post = False
+    # si no esta prosesamos el status = 404
+    cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id)))
+    found_post = cur.fetchone()
     if not found_post:
         # we need | from fastapi import HTTPException
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'no se encontro el id {id}')
         # queda mas ordenado en una sola linea con HTTPException
-    return {"id was": id}
+    return {"id was": found_post}
 
+@app.delete("/posts/{id}", status_code=status.HTTP_403_FORBIDDEN)
+def delete_post(id:int):
+    cur.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id)))
+    found_delete = cur.fetchone()
+
+    if not found_delete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return {'post deleted': found_delete}
