@@ -12,16 +12,27 @@ from psycopg2.extras import RealDictCursor
 # uvicorn app.main:app --reload ------> dentro de una carpeta
 app = FastAPI()
 
-try:
-    # Connect to an existing database
-    #conn = psycopg2.connect(host, database, user, password)
-    conn = psycopg2.connect(host='localhost', database=DATABASE_NAME, user='postgres', password=PASS_DB, cursor_factory=RealDictCursor)
-    # Open a cursor to perform database operations
-    cur = conn.cursor()
-    print('successful conection')
-except Exception as error:
-    print('no se pudo conectar a la base de datos de postgres')
-    print(error)
+# bucle while para que cada 3 segundos trate de conectarse a la base de datos
+# motivo: la idea es que nos se puedan ejecutar comandos CRUD mientras no se conecte a la base de datos
+import time # time.sleep() ---> para que espere x segundos para un nuevo intento de coneccion
+# motivo2: fallas en la conexion a internet, o la base de dato.
+while True:
+    try:
+        # Connect to an existing database
+        #conn = psycopg2.connect(host, database, user, password)
+        conn = psycopg2.connect(host='localhost', database=DATABASE_NAME, user='postgres', password=PASS_DB, cursor_factory=RealDictCursor)
+        # Open a cursor to perform database operations
+        cur = conn.cursor()
+        print('successful conection')
+        break
+    except Exception as error:
+        print('no se pudo conectar a la base de datos de postgres')
+        print(error)
+        time.sleep(4)
+
+@app.get("/posts")
+def get_posts():
+    return{}
 
 @app.post("/posts", 
         status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
@@ -52,3 +63,4 @@ def get_one(id:int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'no se encontro el id {id}')
         # queda mas ordenado en una sola linea con HTTPException
     return {"id was": id}
+
