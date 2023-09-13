@@ -1,5 +1,7 @@
 from fastapi import FastAPI, status, HTTPException
-from .schema import Post
+from .schemas import Post
+from . import models, schemas
+from .database import SessionLocal, engine
 # pip install python-decouple python-dotenv-------------------------------
 from decouple import config # to pass env passwords from .env file--------
 PASS_DB = config('PASS_DB')
@@ -10,6 +12,7 @@ from psycopg2.extras import RealDictCursor
 
 # uvicorn main:app --reload ----------> arrancar un servidor local
 # uvicorn app.main:app --reload ------> dentro de una carpeta
+models.Base.metadata.create_all(bind=engine) #<-- crea las tablas y columnas de models en la base de datos automaticamente en el momento de arrancar uvicorn
 app = FastAPI()
 
 # bucle while para que cada 3 segundos trate de conectarse a la base de datos
