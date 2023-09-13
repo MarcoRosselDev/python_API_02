@@ -20,7 +20,7 @@ app = FastAPI()
 # motivo: la idea es que nos se puedan ejecutar comandos CRUD mientras no se conecte a la base de datos
 import time # time.sleep() ---> para que espere x segundos para un nuevo intento de coneccion
 # motivo2: fallas en la conexion a internet, o la base de dato.
-while True:
+""" while True:
     try:
         # Connect to an existing database
         #conn = psycopg2.connect(host, database, user, password)
@@ -33,13 +33,11 @@ while True:
         print('no se pudo conectar a la base de datos de postgres')
         print(error)
         time.sleep(4)
-
+"""
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
-    return{
-        "data": posts
-    }
+    return{"data": posts}
 
 @app.post("/posts",
         status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
@@ -51,22 +49,22 @@ def posting(
     post:Post,
     db: Session = Depends(get_db)
     ):
+    #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
     # cur.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
     #posts_db = cur.fetchone()
     #conn.commit()
+    #--------------------------------------------------------------------------------------------------------------------------
     posts_db = models.Post(title=post.title, content=post.content)
     # en caso de que el modelo sea muy largo podemos convertir post(parametro) en diccionario y pasarlo a models.Post
     # post_db = models.Post(**post.dict())
     # por ahora lo dejos asi por que es mas visual y entendible para mi
-    db.add(posts_db)
-    db.commit()
-    db.refresh(posts_db)
-    return {
-        'data': posts_db
-        }
-
+    db.add(posts_db) # agregar la peticion a la seccion local db
+    db.commit() # para guardar los cambios, si no no se salvan los cambios
+    db.refresh(posts_db) # refresca para que podamos ver el retorno, si no retorna {} vacio
+    return {'data': posts_db}
+'''
 @app.get("/posts/{id}")
-def get_one(id:int):
+def get_one(id:int, db: Session = Depends(get_db)):
     # algun mecanismo para encontrar el id en la base de datos
     # si no esta prosesamos el status = 404
     cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
@@ -97,3 +95,4 @@ def update_post(id:int, post:Post):
     if not updated_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {id} was not found')
     return {'post deleted': updated_post}
+'''
