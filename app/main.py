@@ -34,21 +34,12 @@ while True:
         print(error)
         time.sleep(4)
 
-
-#test for sqlalchemy
-@app.get("/sqlalchemy")
-def sqlachemy_db(db: Session = Depends(get_db)):
+@app.get("/posts")
+def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return{
         "data": posts
     }
-
-@app.get("/posts")
-def get_posts():
-    cur.execute("""SELECT * FROM posts""")
-    posts = cur.fetchall()
-    return{'data':posts}
-
 
 @app.post("/posts",
         status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
@@ -57,11 +48,19 @@ def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
-    post:Post
+    post:Post,
+    db: Session = Depends(get_db)
     ):
-    cur.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
-    posts_db = cur.fetchone()
-    conn.commit()
+    # cur.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
+    #posts_db = cur.fetchone()
+    #conn.commit()
+    posts_db = models.Post(title=post.title, content=post.content)
+    # en caso de que el modelo sea muy largo podemos convertir post(parametro) en diccionario y pasarlo a models.Post
+    # post_db = models.Post(**post.dict())
+    # por ahora lo dejos asi por que es mas visual y entendible para mi
+    db.add(posts_db)
+    db.commit()
+    db.refresh(posts_db)
     return {
         'data': posts_db
         }
