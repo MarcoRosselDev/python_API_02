@@ -1,7 +1,8 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status, HTTPException, Depends
 from .schemas import Post
-from . import models, schemas
-from .database import SessionLocal, engine
+from sqlalchemy.orm import Session
+from . import models
+from .database import engine, get_db
 # pip install python-decouple python-dotenv-------------------------------
 from decouple import config # to pass env passwords from .env file--------
 PASS_DB = config('PASS_DB')
@@ -12,7 +13,7 @@ from psycopg2.extras import RealDictCursor
 
 # uvicorn main:app --reload ----------> arrancar un servidor local
 # uvicorn app.main:app --reload ------> dentro de una carpeta
-models.Base.metadata.create_all(bind=engine) #<-- crea las tablas y columnas de models en la base de datos automaticamente en el momento de arrancar uvicorn
+models.Base.metadata.create_all(bind=engine)#<-- crea las tablas y columnas de models en la base de datos automaticamente en el momento de arrancar uvicorn
 app = FastAPI()
 
 # bucle while para que cada 3 segundos trate de conectarse a la base de datos
@@ -33,11 +34,20 @@ while True:
         print(error)
         time.sleep(4)
 
+
+#test for sqlalchemy
+@app.get("/sqlalchemy")
+def sqlachemy_db(db: Session = Depends(get_db)):
+    return{
+        "data": "successful"
+    }
+
 @app.get("/posts")
 def get_posts():
     cur.execute("""SELECT * FROM posts""")
     posts = cur.fetchall()
     return{'data':posts}
+
 
 @app.post("/posts",
         status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
@@ -59,7 +69,7 @@ def posting(
 def get_one(id:int):
     # algun mecanismo para encontrar el id en la base de datos
     # si no esta prosesamos el status = 404
-    cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id)))
+    cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     found_post = cur.fetchone()
     if not found_post:
         # we need | from fastapi import HTTPException
@@ -69,7 +79,7 @@ def get_one(id:int):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_403_FORBIDDEN)
 def delete_post(id:int):
-    cur.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id)))
+    cur.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
     found_delete = cur.fetchone()
     conn.commit()
 
