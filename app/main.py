@@ -38,8 +38,9 @@ while True:
 #test for sqlalchemy
 @app.get("/sqlalchemy")
 def sqlachemy_db(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
     return{
-        "data": "successful"
+        "data": posts
     }
 
 @app.get("/posts")
