@@ -96,15 +96,21 @@ def delete_post(
     db.commit()
     return HTTPException(status_code=status.HTTP_204_NO_CONTENT)
 
-'''
 @app.put("/posts/{id}")
-def update_post(id:int, post:Post):
-    cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (post.title, post.content, post.published, str(id)))
+def update_post(
+    id:int, 
+    post:Post,
+    db: Session = Depends(get_db)
+    ):
+    #cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (post.title, post.content, post.published, str(id)))
     # vamos a probar sqlalchemy:
     # es una libreria no relacionada con FastAPI que realiza consultas sql en codigo python
-    updated_post = cur.fetchone()
-    conn.commit()
-    if not updated_post:
+    #updated_post = cur.fetchone()
+    #conn.commit()
+    found_post_update = db.query(models.Post).filter(models.Post.id == id)
+    first_one = found_post_update.first()
+    if not first_one:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {id} was not found')
-    return {'post deleted': updated_post}
-'''
+    found_post_update.update(post.dict(), synchronize_session=False)
+    db.commit()
+    return {'post deleted': found_post_update.first()}
