@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status, HTTPException, Depends, Response
 from typing import List
 from .schemas import PostSchema, PostBase, PostCreate, ResponseUserCreated, UserCreate
+from .utils import hash_pwd
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
@@ -138,6 +139,8 @@ def create_user(
     user:UserCreate,
     db: Session = Depends(get_db)
     ):
+    pwd = hash_pwd(user.password)
+    user.password = pwd
     user_db = models.User(**user.dict())
     db.add(user_db)
     db.commit()
