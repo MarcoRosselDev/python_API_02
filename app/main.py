@@ -62,29 +62,41 @@ def posting(
     db.commit() # para guardar los cambios, si no no se salvan los cambios
     db.refresh(posts_db) # refresca para que podamos ver el retorno, si no retorna {} vacio
     return {'data': posts_db}
-'''
+
 @app.get("/posts/{id}")
-def get_one(id:int, db: Session = Depends(get_db)):
+def get_one(
+    id:int,
+    db: Session = Depends(get_db)
+    ):
     # algun mecanismo para encontrar el id en la base de datos
     # si no esta prosesamos el status = 404
-    cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
-    found_post = cur.fetchone()
-    if not found_post:
+    #cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
+    #found_post = cur.fetchone()
+    post_id = db.query(models.Post).filter(models.Post.id == id).first( )
+    if not post_id:
         # we need | from fastapi import HTTPException
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'no se encontro el id {id}')
         # queda mas ordenado en una sola linea con HTTPException
-    return {"id was": found_post}
+    return {"id was": post_id}
+
 
 @app.delete("/posts/{id}", status_code=status.HTTP_403_FORBIDDEN)
-def delete_post(id:int):
-    cur.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
-    found_delete = cur.fetchone()
-    conn.commit()
+def delete_post(
+    id:int,
+    db: Session = Depends(get_db)
+    ):
+    #cur.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
+    #found_delete = cur.fetchone()
+    #conn.commit()
+    found_post_to_delete = db.query(models.Post).filter(models.Post.id == id)
 
-    if not found_delete:
+    if not found_post_to_delete:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return {'post deleted': found_delete}
+    found_post_to_delete.delete(synchronize_session=False)
+    db.commit()
+    return HTTPException(status_code=status.HTTP_204_NO_CONTENT)
 
+'''
 @app.put("/posts/{id}")
 def update_post(id:int, post:Post):
     cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (post.title, post.content, post.published, str(id)))
