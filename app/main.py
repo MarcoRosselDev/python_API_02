@@ -1,5 +1,5 @@
 from fastapi import FastAPI, status, HTTPException, Depends
-from .schemas import Post
+from .schemas import PostSchema, PostBase, PostCreate
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
@@ -18,7 +18,7 @@ app = FastAPI()
 
 # bucle while para que cada 3 segundos trate de conectarse a la base de datos
 # motivo: la idea es que nos se puedan ejecutar comandos CRUD mientras no se conecte a la base de datos
-import time # time.sleep() ---> para que espere x segundos para un nuevo intento de coneccion
+# time.sleep() ---> para que espere x segundos para un nuevo intento de coneccion
 # motivo2: fallas en la conexion a internet, o la base de dato.
 """ while True:
     try:
@@ -40,13 +40,14 @@ def get_posts(db: Session = Depends(get_db)):
     return{"data": posts}
 
 @app.post("/posts",
-        status_code=status.HTTP_201_CREATED # por ahora, por que regresava 200 = ok
+        status_code=status.HTTP_201_CREATED, # por ahora, por que regresava 200 = ok
+        response_model=PostSchema
         )
 def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
-    post:Post,
+    post:PostCreate,
     db: Session = Depends(get_db)
     ):
     #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
@@ -72,7 +73,7 @@ def get_one(
     # si no esta prosesamos el status = 404
     #cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     #found_post = cur.fetchone()
-    post_id = db.query(models.Post).filter(models.Post.id == id).first( )
+    post_id = db.query(models.Post).filter(models.Post.id == id).first()
     if not post_id:
         # we need | from fastapi import HTTPException
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'no se encontro el id {id}')
@@ -99,7 +100,7 @@ def delete_post(
 @app.put("/posts/{id}")
 def update_post(
     id:int, 
-    post:Post,
+    post:PostCreate,
     db: Session = Depends(get_db)
     ):
     #cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (post.title, post.content, post.published, str(id)))
