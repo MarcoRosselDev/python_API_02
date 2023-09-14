@@ -1,6 +1,6 @@
-from fastapi import FastAPI, status, HTTPException, Depends
+from fastapi import FastAPI, status, HTTPException, Depends, Response
+from typing import List
 from .schemas import PostSchema, PostBase, PostCreate
-from . import schemas
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
@@ -35,19 +35,22 @@ app = FastAPI()
         print(error)
         time.sleep(4)
 """
-@app.get("/posts")
+@app.get("/posts", 
+    response_model=List[PostSchema] # cuando retornamos una lista requerimos List from typing
+    # para que formatee la respuesta en una lista
+    )
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
-    return{"data": posts}
+    return posts
 
 @app.post("/posts", 
-        response_model=schemas.PostSchema,  # esquema de retorna, para omitir info al retornar
+        response_model=PostSchema,  # esquema de retorna, para omitir info al retornar
         status_code=status.HTTP_201_CREATED)
 def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
-    post:schemas.PostCreate,
+    post:PostCreate,
     db: Session = Depends(get_db)
     ):
     #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
@@ -65,7 +68,9 @@ def posting(
     db.refresh(posts_db) # refresca para que podamos ver el retorno, si no retorna {} vacio
     return posts_db # ojo, error si retornamos {'data': posts_db}
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",
+    response_model=PostSchema
+    )
 def get_one(
     id:int,
     db: Session = Depends(get_db)
@@ -77,12 +82,15 @@ def get_one(
     post_id = db.query(models.Post).filter(models.Post.id == id).first()
     if not post_id:
         # we need | from fastapi import HTTPException
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'no se encontro el id {id}')
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f'no se encontro el id {id}')
         # queda mas ordenado en una sola linea con HTTPException
-    return {"id was": post_id}
+    return post_id
 
-
-@app.delete("/posts/{id}", status_code=status.HTTP_403_FORBIDDEN)
+@app.delete("/posts/{id}", 
+    status_code=status.HTTP_403_FORBIDDEN
+    )
 def delete_post(
     id:int,
     db: Session = Depends(get_db)
@@ -91,14 +99,20 @@ def delete_post(
     #found_delete = cur.fetchone()
     #conn.commit()
     found_post_to_delete = db.query(models.Post).filter(models.Post.id == id)
+    first_one = found_post_to_delete.first()
 
-    if not found_post_to_delete:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if first_one == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'Post with id :{id} doesn not exist')
+    
     found_post_to_delete.delete(synchronize_session=False)
     db.commit()
-    return HTTPException(status_code=status.HTTP_204_NO_CONTENT)
 
-@app.put("/posts/{id}")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.put("/posts/{id}",
+    response_model=PostSchema)
 def update_post(
     id:int, 
     post:PostCreate,
@@ -115,4 +129,4 @@ def update_post(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {id} was not found')
     found_post_update.update(post.dict(), synchronize_session=False)
     db.commit()
-    return {'post deleted': found_post_update.first()}
+    return found_post_update.first()
