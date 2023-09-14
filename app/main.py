@@ -1,5 +1,6 @@
 from fastapi import FastAPI, status, HTTPException, Depends
 from .schemas import PostSchema, PostBase, PostCreate
+from . import schemas
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
@@ -39,15 +40,14 @@ def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return{"data": posts}
 
-@app.post("/posts",
-        status_code=status.HTTP_201_CREATED, # por ahora, por que regresava 200 = ok
-        response_model=PostSchema
-        )
+@app.post("/posts", 
+        response_model=schemas.PostSchema,  # esquema de retorna, para omitir info al retornar
+        status_code=status.HTTP_201_CREATED)
 def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
-    post:PostCreate,
+    post:schemas.PostCreate,
     db: Session = Depends(get_db)
     ):
     #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
@@ -55,14 +55,15 @@ def posting(
     #posts_db = cur.fetchone()
     #conn.commit()
     #--------------------------------------------------------------------------------------------------------------------------
-    posts_db = models.Post(title=post.title, content=post.content)
+    #----------->posts_db = models.Post(title=post.title, content=post.content)
+    posts_db = models.Post(**post.dict())
     # en caso de que el modelo sea muy largo podemos convertir post(parametro) en diccionario y pasarlo a models.Post
     # post_db = models.Post(**post.dict())
     # por ahora lo dejos asi por que es mas visual y entendible para mi
     db.add(posts_db) # agregar la peticion a la seccion local db
     db.commit() # para guardar los cambios, si no no se salvan los cambios
     db.refresh(posts_db) # refresca para que podamos ver el retorno, si no retorna {} vacio
-    return {'data': posts_db}
+    return posts_db # ojo, error si retornamos {'data': posts_db}
 
 @app.get("/posts/{id}")
 def get_one(

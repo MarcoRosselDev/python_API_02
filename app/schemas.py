@@ -11,13 +11,10 @@ class PostCreate(PostBase):
 
 class PostSchema(PostBase):
     id: int
-    #title: str
-    #content: str
-    #published: bool
-    created_at : datetime
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 """ class Post(BaseModel):  #---> Modelo imortado de pydantic que valida el formato resivido segun un modelo
     title: str      #----> Valor requerido
