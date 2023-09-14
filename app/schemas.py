@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 class PostBase(BaseModel):
@@ -16,6 +16,14 @@ class PostSchema(PostBase):
     class Config:
         from_attributes = True
 
+class ResponseUserCreated(BaseModel):
+    id: int
+    email: EmailStr
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    
 """ class Post(BaseModel):  #---> Modelo imortado de pydantic que valida el formato resivido segun un modelo
     title: str      #----> Valor requerido
     content: str    #----> Valor requerido. Si no esta, lanza error.
