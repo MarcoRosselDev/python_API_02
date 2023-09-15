@@ -23,6 +23,10 @@ class ResponseUserCreated(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
     
 """ class Post(BaseModel):  #---> Modelo imortado de pydantic que valida el formato resivido segun un modelo
     title: str      #----> Valor requerido

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import post, user
+from .routers import post, user, auth
 from .database import engine
 from . import models
 # pip install python-decouple python-dotenv-------------------------------
@@ -16,22 +16,4 @@ models.Base.metadata.create_all(bind=engine)#<-- crea las tablas y columnas de m
 app = FastAPI()
 app.include_router(post.router)
 app.include_router(user.router)
-
-# bucle while para que cada 3 segundos trate de conectarse a la base de datos
-# motivo: la idea es que nos se puedan ejecutar comandos CRUD mientras no se conecte a la base de datos
-# time.sleep() ---> para que espere x segundos para un nuevo intento de coneccion
-# motivo2: fallas en la conexion a internet, o la base de dato.
-""" while True:
-    try:
-        # Connect to an existing database
-        #conn = psycopg2.connect(host, database, user, password)
-        conn = psycopg2.connect(host='localhost', database=DATABASE_NAME, user='postgres', password=PASS_DB, cursor_factory=RealDictCursor)
-        # Open a cursor to perform database operations
-        cur = conn.cursor() # este cur es importante, con esto operamos CRUD en postgres desde python
-        print('successful conection')
-        break
-    except Exception as error:
-        print('no se pudo conectar a la base de datos de postgres')
-        print(error)
-        time.sleep(4)
-"""
+app.include_router(auth.router)
