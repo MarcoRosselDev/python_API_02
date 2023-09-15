@@ -30,12 +30,13 @@ class UserLogin(BaseModel):
     password: str
 
 class Token(BaseModel):
-    access_token : str
-    token_type : str
+    access_token: str
+    token_type: str
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
-    
+    id:str
+    #id: Optional[str] = None
+
 """ class Post(BaseModel):  #---> Modelo imortado de pydantic que valida el formato resivido segun un modelo
     title: str      #----> Valor requerido
     content: str    #----> Valor requerido. Si no esta, lanza error.

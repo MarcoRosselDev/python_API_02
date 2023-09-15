@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
 from fastapi import APIRouter, status, HTTPException, Depends, Response
-from .. import models
+from .. import models, oauth2
 
 router = APIRouter(
     prefix="/posts",
@@ -19,14 +19,15 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 @router.post("/", 
-        response_model=PostSchema,  # esquema de retorna, para omitir info al retornar
-        status_code=status.HTTP_201_CREATED)
+        status_code=status.HTTP_201_CREATED,
+        response_model=PostSchema)  # esquema de retorna, para omitir info al retornar
 def posting(
     #body:dict = Body(...)): ---> Body extrae el cuerpo del post
     # from fastapi.params import Body ---> nesecita import Body para funcionar
     # es mejor usar pydantic como libreria aparte para extraer y esquematizar los datos requeridos
     post:PostCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth2.get_current_user)
     ):
     #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
     # cur.execute(""" INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
@@ -34,6 +35,7 @@ def posting(
     #conn.commit()
     #--------------------------------------------------------------------------------------------------------------------------
     #----------->posts_db = models.Post(title=post.title, content=post.content)
+    print(current_user)
     posts_db = models.Post(**post.dict())
     # en caso de que el modelo sea muy largo podemos convertir post(parametro) en diccionario y pasarlo a models.Post
     # post_db = models.Post(**post.dict())
