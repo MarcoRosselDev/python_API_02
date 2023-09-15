@@ -43,7 +43,7 @@ def posting(
 """
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostCreate)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int=Depends(oauth2.get_current_user)):
-    print(user_id)
+    print(user_id, 'print id')
     new_post = models.Post(**post.dict())
     db.add(new_post)
     db.commit()

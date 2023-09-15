@@ -57,8 +57,7 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
-    exp: int
+    id: str | None = None
 
 
 """ class Post(BaseModel):  #---> Modelo imortado de pydantic que valida el formato resivido segun un modelo
