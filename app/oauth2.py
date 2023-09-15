@@ -58,7 +58,7 @@ EXPIRE_MINUTES=config('ACCESS_TOKEN_EXPIRE_MINUTES')
 def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(minutes=30)
+    expire = datetime.utcnow() + timedelta(minutes=1000)
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -83,7 +83,7 @@ def verify_access_token(token: str, credentials_exception):
         username: str = payload.get("user_id")
         if username is None:
             raise credentials_exception
-        token_data = schemas.TokenData(email=username)
+        token_data = schemas.TokenData(id_user=str(username))
     except JWTError:
         raise credentials_exception
     return token_data
@@ -101,6 +101,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         )
     token = verify_access_token(token, credentials_exception)#
 
-    user = db.query(models.User).filter(models.User.id == token.id).first()
+    user = db.query(models.User).filter(models.User.id == token.id_user).first()
 
     return user

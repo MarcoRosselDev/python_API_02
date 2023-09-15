@@ -17,32 +17,12 @@ def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
-""" @router.post("/", 
-        status_code=status.HTTP_201_CREATED,
-        response_model=schemas.PostCreate)  # esquema de retorna, para omitir info al retornar
-def posting(
-    post:schemas.PostCreate,
-    db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user)
-    ):
-    #-------------------------------- codigo previo (sql lenguage) -----------------------------------------------------------
-    # cur.execute'''INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *''', (post.title, post.content, post.published))
-    #posts_db = cur.fetchone()
-    #conn.commit()
-    #--------------------------------------------------------------------------------------------------------------------------
-    #----------->posts_db = models.Post(title=post.title, content=post.content)
-    print(current_user)
-    posts_db = models.Post(**post.dict())
-    # en caso de que el modelo sea muy largo podemos convertir post(parametro) en diccionario y pasarlo a models.Post
-    # post_db = models.Post(**post.dict())
-    # por ahora lo dejos asi por que es mas visual y entendible para mi
-    db.add(posts_db) # agregar la peticion a la seccion local db
-    db.commit() # para guardar los cambios, si no no se salvan los cambios
-    db.refresh(posts_db) # refresca para que podamos ver el retorno, si no retorna {} vacio
-    return posts_db # ojo, error si retornamos {'data': posts_db}
-"""
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostCreate)
-def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int=Depends(oauth2.get_current_user)):
+def create_posts(
+    post: schemas.PostCreate, 
+    db: Session = Depends(get_db), 
+    user_id: int=Depends(oauth2.get_current_user)
+    ):
     print(user_id, 'print id')
     new_post = models.Post(**post.dict())
     db.add(new_post)
@@ -56,12 +36,15 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), user_i
     )
 def get_one(
     id:int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int=Depends(oauth2.get_current_user)
     ):
     # algun mecanismo para encontrar el id en la base de datos
     # si no esta prosesamos el status = 404
     #cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     #found_post = cur.fetchone()
+    print(user_id.email, "email user")
+    print(user_id.id, "id user")
     post_id = db.query(models.Post).filter(models.Post.id == id).first()
     if not post_id:
         # we need | from fastapi import HTTPException
@@ -76,7 +59,8 @@ def get_one(
     )
 def delete_post(
     id:int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int=Depends(oauth2.get_current_user)
     ):
     found_post_to_delete = db.query(models.Post).filter(models.Post.id == id)
     first_one = found_post_to_delete.first()
@@ -96,7 +80,8 @@ def delete_post(
 def update_post(
     id:int, 
     post:schemas.PostCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int=Depends(oauth2.get_current_user)
     ):
     #cur.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, (post.title, post.content, post.published, str(id)))
     # vamos a probar sqlalchemy:
