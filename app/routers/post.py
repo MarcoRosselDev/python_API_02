@@ -29,7 +29,7 @@ def create_posts(
     db: Session = Depends(get_db), 
     user_id: int=Depends(oauth2.get_current_user)
     ):
-    print(user_id, 'print id')
+    #print(user_id, 'print id')
     new_post = models.Post(owner_id=user_id.id, # --> owner_id de schema le damos el valor de la llave foranea decodificada.
         **post.dict() # --> lo demas lo extraemos del schema post. convertido en dictionari.
         )
@@ -54,11 +54,16 @@ def get_one(
     print(user_id.email, "email user")
     print(user_id.id, "id user")
     post_id = db.query(models.Post).filter(models.Post.id == id).first()
+    first_one = post_id
     if not post_id:
         # we need | from fastapi import HTTPException
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f'no se encontro el id {id}')
+    if post_id.owner_id != user_id.id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="You're not authorized to see this post")
         # queda mas ordenado en una sola linea con HTTPException
     return post_id
 
