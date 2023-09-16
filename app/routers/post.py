@@ -13,11 +13,14 @@ router = APIRouter(
     response_model=List[schemas.Post] # cuando retornamos una lista requerimos List from typing
     # para que formatee la respuesta en una lista
     )
-def get_posts(
+def get_all(
     db: Session = Depends(get_db), #--> abre y cierra una session en data base de postgres
-    user_id: int=Depends(oauth2.get_current_user) #--> desencripta la llave foranea para obtener info del usuario y su key
+    user_id: int=Depends(oauth2.get_current_user), #--> desencripta la llave foranea para obtener info del usuario y su key
+    limit:int=10 # significa que limit es un entero que por defecto es 10, (limite de posts a responder)
+    # {{URL}}posts?limit=3 ----> retorna solo los ultimos 3 posts
     ):
-    posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).all()
+    #posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).all()
+    posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).limit(limit).all()
     return posts
 
 @router.post("/", 
@@ -51,8 +54,6 @@ def get_one(
     # si no esta prosesamos el status = 404
     #cur.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
     #found_post = cur.fetchone()
-    print(user_id.email, "email user")
-    print(user_id.id, "id user")
     post_id = db.query(models.Post).filter(models.Post.id == id).first()
     first_one = post_id
     if not post_id:
