@@ -76,7 +76,13 @@ def delete_post(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Post with id :{id} doesn not exist')
-    
+    print(user_id.id, 'user id')
+    print(type(user_id.id))
+    print(first_one.owner_id)
+    if first_one.owner_id != user_id.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Not authorized to perform requested action')
     found_post_to_delete.delete(synchronize_session=False)
     db.commit()
 
@@ -99,6 +105,10 @@ def update_post(
     first_one = found_post_update.first()
     if not first_one:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {id} was not found')
+    if found_post_update != user_id.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Not authorized to perform requested action')
     found_post_update.update(post.dict(), synchronize_session=False)
     db.commit()
     return found_post_update.first()
