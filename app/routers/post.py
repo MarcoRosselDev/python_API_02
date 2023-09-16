@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from ..database import get_db
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, status, HTTPException, Depends, Response
 from .. import models, oauth2, schemas
 
@@ -16,11 +16,15 @@ router = APIRouter(
 def get_all(
     db: Session = Depends(get_db), #--> abre y cierra una session en data base de postgres
     user_id: int=Depends(oauth2.get_current_user), #--> desencripta la llave foranea para obtener info del usuario y su key
-    limit:int=10 # significa que limit es un entero que por defecto es 10, (limite de posts a responder)
+    limit:int=10, # significa que limit es un entero que por defecto es 10, (limite de posts a responder)
     # {{URL}}posts?limit=3 ----> retorna solo los ultimos 3 posts
+    skip:int=0, # skip = saltar---->{{URL}}/posts?limit=5&skip=4 --> se salta los primeros 4 resultados.
+    search:Optional[str] = '' # &search -> Opcional, por defecto un str vacio.--->filtramos algun titulo que contenga la palabra
+    # {{URL}}/posts?limit=20&search=5 --->  retorno solo 1 resultado --->  "title": "thir published 5"
+    # {{URL}}/posts?limit=20&search=thir%20published---> no podemos user un espacio en la url---> espacio == %20
     ):
     #posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).all()
-    posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).limit(limit).all()
+    posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 @router.post("/", 
