@@ -10,21 +10,28 @@ router = APIRouter(
     )
 
 @router.get("/", 
-    response_model=List[schemas.PostBase] # cuando retornamos una lista requerimos List from typing
+    response_model=List[schemas.Post] # cuando retornamos una lista requerimos List from typing
     # para que formatee la respuesta en una lista
     )
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(
+    db: Session = Depends(get_db)
+    ):
     posts = db.query(models.Post).all()
     return posts
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostCreate)
+@router.post("/", 
+    status_code=status.HTTP_201_CREATED, 
+    response_model=schemas.Post
+    )
 def create_posts(
-    post: schemas.PostCreate, 
+    post: schemas.PostCreate,
     db: Session = Depends(get_db), 
     user_id: int=Depends(oauth2.get_current_user)
     ):
     print(user_id, 'print id')
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(owner_id=user_id.id, # --> owner_id de schema le damos el valor de la llave foranea decodificada.
+        **post.dict() # --> lo demas lo extraemos del schema post. convertido en dictionari.
+        )
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -32,7 +39,7 @@ def create_posts(
     return new_post
 
 @router.get("/{id}",
-    response_model=schemas.PostCreate
+    response_model=schemas.Post
     )
 def get_one(
     id:int,
@@ -76,7 +83,7 @@ def delete_post(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.put("/{id}",
-    response_model=schemas.PostCreate)
+    response_model=schemas.Post)
 def update_post(
     id:int, 
     post:schemas.PostCreate,
