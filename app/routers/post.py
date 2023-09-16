@@ -14,9 +14,10 @@ router = APIRouter(
     # para que formatee la respuesta en una lista
     )
 def get_posts(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db), #--> abre y cierra una session en data base de postgres
+    user_id: int=Depends(oauth2.get_current_user) #--> desencripta la llave foranea para obtener info del usuario y su key
     ):
-    posts = db.query(models.Post).all()
+    posts = db.query(models.Post).filter(models.Post.owner_id == user_id.id).all()
     return posts
 
 @router.post("/", 
@@ -105,7 +106,7 @@ def update_post(
     first_one = found_post_update.first()
     if not first_one:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'post with id {id} was not found')
-    if found_post_update != user_id.id:
+    if first_one.owner_id != user_id.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Not authorized to perform requested action')
