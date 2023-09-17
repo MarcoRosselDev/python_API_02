@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 router = APIRouter(
     prefix="/vote",
     tags=["Vote"])
+@router.get("/")
+def get_votes(db: Session = Depends(get_db)):
+    get_all = db.query(models.Vote).all()
+    return get_all
 
 @router.post("/",
     status_code=status.HTTP_201_CREATED, 
