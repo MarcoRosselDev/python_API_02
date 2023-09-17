@@ -70,3 +70,6 @@ class TokenData(BaseModel):
     published: bool = True  #----> Valor por defecto.
     reting_optional: Optional[int] = None  #---> Valor opcional #----> need | from typing import Optional
     """
+
+class VotePost(BaseModel):
+    id: int
